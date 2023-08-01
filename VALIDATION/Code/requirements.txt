@@ -1,0 +1,14 @@
+###### Requirements without Version Specifiers ######
+pip
+Pillow
+numpy
+nibabel
+matplotlib
+progressbar
+scipy
+sklearn
+networkx
+
+###### Requirements with Version Specifiers ######
+nilearn == 0.9.1
+
