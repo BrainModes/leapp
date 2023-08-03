@@ -191,7 +191,7 @@ case "${Mode}" in
             log_msg "ERROR:    no <<Atlas>> variable defined"
             show_usage
         fi
-        Connectome="None"
+        export Connectome="None"
     ;;
     connectome)
         if [[ -z ${Level} ]]; then

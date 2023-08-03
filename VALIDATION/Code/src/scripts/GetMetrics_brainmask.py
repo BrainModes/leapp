@@ -60,6 +60,18 @@ def get_data(path,labels,subjectlist):
         data[s] = get_dict(path,labels,s)
     return(data)
 
+def get_mode_data(_dict):
+    '''
+    check mode compliange of data dictionary:
+    if mode == global > binarize input data
+    '''
+    _index = list(_dict.keys())
+    if len(list(numpy.unique(list( list(_dict.values())[0].values())[0]))) > 2:
+        for i in _index:
+            _fileidx = _dict[i].keys()
+            for f in _fileidx:
+                _dict[i][f] = numpy.where(_dict[i][f]!=0,1,0)
+    return(_dict)
 
 def get_subjectlist(path, _labels, _mode):
     '''
@@ -78,7 +90,8 @@ def get_subjectlist(path, _labels, _mode):
     from utils.Utility import helper
     _list = dict()
     for l in _labels:
-        _list[l] = [ os.path.basename(item) for item in glob.glob(os.path.join(path, str(l)+'/*'+str(_mode)+'.nii.gz')) ]
+        # _list[l] = [ os.path.basename(item) for item in glob.glob(os.path.join(path, str(l)+'/*'+str(_mode)+'.nii.gz')) ]
+        _list[l] = [ os.path.basename(item) for item in glob.glob(os.path.join(path, str(l)+'/*.nii.gz')) ]
     if _list[_labels[0]] != _list[_labels[1]]:
         mismatch = list(set(_list[_labels[0]]) - set(_list[_labels[1]]))
         mismatch.append( list(set(_list[_labels[1]]) - set(_list[_labels[0]])))
@@ -152,6 +165,8 @@ helper.log_msg("START:    Computing brainmask agreement measure.")
 
 Data = get_data(Path, Labels, SubjectList)
 
+if Mode == 'global':
+    Data = get_mode_data(Data)
 
 pool = multiprocessing.Pool(multiprocessing.cpu_count())
 

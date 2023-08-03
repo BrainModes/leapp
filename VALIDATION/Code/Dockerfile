@@ -29,6 +29,7 @@ RUN mkdir /opt/src
 WORKDIR /opt/src
 ENV SRCDIR=/opt/src
 COPY Code/src /opt/src
+RUN chmod -R 777 /opt/src
 COPY Code/src/RUN.sh /usr/local/bin/RUN.sh
 
 
