@@ -222,10 +222,11 @@ RUN apt-get -qq update \
 # ENV PATH="/opt/qt5/bin:$PATH"
 #### trying apt update && apt upgrade
 
-RUN git clone https://github.com/MRtrix3/mrtrix3.git /opt/mrtrix3
+RUN git clone -b "master" --depth 1 https://github.com/MRtrix3/mrtrix3.git /opt/mrtrix3
+
 RUN cd /opt/mrtrix3/ && \
     ./configure -nogui && \
-    ./build
+    ./build -persistent -nopaginate
 
 #save env path mrtrix3
 ENV MRTRIXDIR=/opt/mrtrix3
