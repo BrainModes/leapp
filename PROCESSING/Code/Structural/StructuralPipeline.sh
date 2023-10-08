@@ -132,8 +132,8 @@ if [[ ! -z ${PreFSStep} ]]; then
         done
     fi
 
-    if [[ ! -f $( echo ${WD}/anat/${Subject}_*T2*.ni* ) ]]; then
-        if [[ ! -f $( echo ${WD}/anat/${Subject}_*FLAIR.nii* ) ]]; then
+    if [[ ! -f $( echo ${WD}/anat/${Subject}*T2*.ni* ) ]]; then
+        if [[ ! -f $( echo ${WD}/anat/${Subject}*FLAIR.ni* ) ]]; then
             log_Msg "ERROR:    no T2 image or FLAIR image found. Please provide at least one. Recommended is a high resolution T2w."
             exit 1
         else
