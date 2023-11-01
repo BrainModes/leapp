@@ -1,5 +1,5 @@
 FROM ubuntu:18.04
-MAINTAINER Patrik Bey <patrik.bey@charite.de>
+LABEL maintainer="Patrik Bey <patrik.bey@charite.de>"
 # needed for  ants within mrtrix3
 ARG DEBIAN_FRONTEND=noninteractive
 
