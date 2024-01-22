@@ -127,10 +127,10 @@ if [ -z "${MRTRIXDIR}" ]; then
 	exit 1
 fi
 
-if [ -z "${ANTSDIR}" ]; then
-	echo "ERROR: ANTSDIR environment variable must be set"
-	exit 1
-fi
+# if [ -z "${ANTSDIR}" ]; then
+# 	echo "ERROR: ANTSDIR environment variable must be set"
+# 	exit 1
+# fi
 
 
 

@@ -1,5 +1,5 @@
-FROM ubuntu:18.04
-LABEL maintainer="Patrik Bey <patrik.bey@charite.de>"
+FROM ubuntu:22.04
+LABEL maintainer="Patrik Bey <patrik.bey@bih-charite.de>"
 # needed for  ants within mrtrix3
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -9,19 +9,36 @@ ENV LANG="C.UTF-8" \
 # Download FreeSurfer
 RUN apt-get -qq update && \
     apt-get install -yq --no-install-recommends \
-      bc \
-      bzip2 \
-      ca-certificates \
-      curl \
-      libgomp1 \
-      perl-modules \
-      tar \
-      tcsh \
-      wget \
-      libxmu6 && \
+    bc \
+    bzip2 \
+    ca-certificates \
+    curl \
+    libgomp1 \
+    perl-modules \
+    tar \
+    tcsh \
+    wget \
+    libxmu6 \
+    git \
+    libeigen3-dev \
+    libfftw3-dev \
+    libgl1-mesa-dev \
+    libpng-dev \
+    libtiff5-dev \
+    zlib1g-dev \
+    libxext6 \
+    libxpm-dev \
+    libxt6 \
+    libfreetype6 \
+    libglib2.0 \
+    gcc \
+    g++ \
+    libglu1 \
+    unzip && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
     | tar zxv -C /opt \
       --exclude='freesurfer/trctrain' \
       --exclude='freesurfer/subjects/fsaverage_sym' \
@@ -58,13 +75,6 @@ ENV OS=Linux \
 
 
 RUN apt-get update -qq \
-    && apt-get install -y -q --no-install-recommends \
-       libxext6 \
-       libxpm-dev \
-       libxt6 \
-       unzip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && echo "Downloading MATLAB Compiler Runtime ..." \
     && curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
     && unzip -q /tmp/mcr.zip -d /tmp/mcrtmp \
@@ -82,20 +92,17 @@ RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.7.12.1-Linux-x8
     rm Miniconda2-4.7.12.1-Linux-x86_64.sh && \
     conda config --add channels conda-forge && \
     conda install -y mkl=2019.3 mkl-service=2.0.2 numpy=1.16.4 nibabel=2.4.1 pandas=0.24.2 && sync && \
-    conda clean -tipsy && sync && \
-    pip install --no-cache-dir pybids==0.9.1
+    conda clean -tipsy && sync 
+RUN echo "Installing PyBids"
+# RUN pip install --no-cache-dir pybids==0.9.1
 
 RUN echo "Miniconda installation finished"
 
 # Install connectome-workbench
 WORKDIR /opt
-RUN apt-get -qq update && \
-    apt-get install -yq libfreetype6 libglib2.0 && \
-    # wget -q https://ftp.humanconnectome.org/workbench/workbench-linux64-v1.3.2.zip -O wb.zip \
-    wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip -O wb.zip \
+RUN wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip -O wb.zip \
     && unzip wb.zip \
     && rm wb.zip && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 ENV CARET7DIR="/opt/workbench/bin_linux64"
 
@@ -103,15 +110,11 @@ RUN echo "Workbench installation finished"
 
 
 # Install HCP Pipelines and MSM binaries
-RUN apt-get -qq update && \
-    apt-get install -yq --no-install-recommends gcc g++ libglu1 && \
-    rm -rf /tmp/* && \
-    wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.0.0.tar.gz | tar xz -C /tmp && \
+RUN wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.0.0.tar.gz | tar xz -C /tmp && \
     mv /tmp/* /opt/HCP-Pipelines && \
     mkdir /opt/HCP-Pipelines/MSMBinaries && \
     wget -q https://github.com/ecr05/MSM_HOCR/releases/download/1.0/msm_ubuntu14.04 -O /opt/HCP-Pipelines/MSMBinaries/msm &&  \
     chmod 755 /opt/HCP-Pipelines/MSMBinaries/msm && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN echo "HCP pipelines installation finished"
@@ -153,10 +156,21 @@ ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates \
 #     rm -f /fslinstaller.py
 # RUN which immv || ( echo "FSLPython not properly configured; re-running" && rm -rf /opt/fsl/fslpython && /opt/fsl/etc/fslconf/fslpython_install.sh -f /opt/fsl || ( cat /tmp/fslpython*/fslpython_miniconda_installer.log && exit 1 ) )
 
+### UPDATE to FSL6.0.6 from 6.0.4 to enable installation via fslinsaller.py
+
+RUN wget -q http://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py -O /usr/local/fslinstaller.py 
+RUN chmod 775 /usr/local/fslinstaller.py && \
+    python2 /usr/local/fslinstaller.py -d /opt/fsl -V 6.0.6 && \
+    rm -f /usr/local/fslinstaller.py
+
+# RUN rm -rf /opt/fsl/fslpython && \
+#    /opt/fsl/etc/fslconf/fslpython_install.sh -f /opt/fsl 
 # Install FSL
-RUN curl https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.1-centos6_64.tar.gz \
-         | tar -xz -C /usr/local
-RUN /usr/local/fsl/etc/fslconf/fslpython_install.sh -f /usr/local/fsl
+# RUN 
+# curl https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.1-centos6_64.tar.gz \
+#          | tar -xz -C /usr/local
+# RUN 
+# /usr/local/fsl/etc/fslconf/fslpython_install.sh -f /usr/local/fsl
 
 RUN echo "FSL installation finished"
 
@@ -168,18 +182,31 @@ ENV FSL_DIR="${FSLDIR}" \
     PATH=${FSLDIR}/bin:$PATH \
     FSLMULTIFILEQUIT=TRUE \
     POSSUMDIR=${FSLDIR} \
-    LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH \
     FSLTCLSH=/usr/bin/tclsh \
     FSLWISH=/usr/bin/wish \
     FSLOUTPUTTYPE=NIFTI_GZ
 
+    # LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH \
 # install gradient_unwarp.py (v1.1.0)
 WORKDIR /tmp
-RUN wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip && \
-  unzip v1.1.0.zip && \
-  cd gradunwarp-1.1.0 && \
-  python setup.py install && \
-  rm -rf gradunwarp-1.1.0 v1.1.0.zip
+# wget -q https://github.com/Washington-University/gradunwarp/archive/v1.2.2.zip 
+# wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip 
+RUN wget -q https://github.com/Washington-University/gradunwarp/archive/refs/tags/1.2.2.zip && \
+    unzip 1.2.2.zip && \
+    cd gradunwarp-1.2.2 && \
+    pip install -r requirements.txt && \
+    pip install . && \
+    cd .. && \
+    rm -rf gradunwarp-1.2.2 1.2.2.zip
+
+# && \
+#   unzip v1.1.0.zip 
+#   && \
+#   cd gradunwarp-1.1.0 
+#   && \
+#   python setup.py install 
+#   && \
+#   rm -rf gradunwarp-1.1.0 v1.1.0.zip
 
 RUN echo "gradunwarp installation finished"
 
@@ -189,8 +216,8 @@ RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines
 
 # Install MCR 2016b
 ENV MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab" \
-    MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91" \
-    LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
+    MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91" 
+    # LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
 
 
 # overwrite matlab mcr shared object
@@ -203,15 +230,14 @@ RUN echo "START: mrtrix3 installation"
 
 
 # Install MRtrix3 compile-time dependencies.
-RUN apt-get -qq update \
-    && apt-get install -yq --no-install-recommends \
-          git \
-          libeigen3-dev \
-          libfftw3-dev \
-          libgl1-mesa-dev \
-          libpng-dev \
-          libtiff5-dev \
-          zlib1g-dev 
+# RUN apt-get install -yq --no-install-recommends \
+#     git \
+#     libeigen3-dev \
+#     libfftw3-dev \
+#     libgl1-mesa-dev \
+#     libpng-dev \
+#     libtiff5-dev \
+#     zlib1g-dev 
         #   qt5-default \
         #   libqt5opengl5  \s
         #   libqt5opengl5-dev \
@@ -233,35 +259,40 @@ ENV MRTRIXDIR=/opt/mrtrix3
 # add mrtrix to PATH variable
 ENV PATH="/opt/mrtrix3/bin:$PATH"
 
+########################
+# ANTs and Dicom2Niix not needed for final pipeline
+########################
+
+
 # Install ANTs
 
-RUN apt-get update
-RUN apt-get install -y ants
-ENV ANTSDIR=/usr/lib/ants
-ENV ANTSPATH=${ANTSDIR}
-# add ants to PATH variable
-ENV PATH="/usr/lib/ants:$PATH"
+# # RUN apt-get update
+# RUN apt-get install -y ants
+# ENV ANTSDIR=/usr/lib/ants
+# ENV ANTSPATH=${ANTSDIR}
+# # add ants to PATH variable
+# ENV PATH="/usr/lib/ants:$PATH"
 
 
-# include dcm2niix for DICOM conversion
-RUN wget -q https://github.com/rordenlab/dcm2niix/releases/download/v1.0.20200331/dcm2niix_lnx.zip && \
-    unzip dcm2niix_lnx.zip && \
-    mkdir /usr/lib/dcm2niix && \
-    mv dcm2niix /usr/lib/dcm2niix/dcm2niix && \
-    rm -r dcm2niix_lnx.zip
+# # include dcm2niix for DICOM conversion
+# RUN wget -q https://github.com/rordenlab/dcm2niix/releases/download/v1.0.20200331/dcm2niix_lnx.zip && \
+#     unzip dcm2niix_lnx.zip && \
+#     mkdir /usr/lib/dcm2niix && \
+#     mv dcm2niix /usr/lib/dcm2niix/dcm2niix && \
+#     rm -r dcm2niix_lnx.zip
 
-ENV PATH="/usr/lib/dcm2niix:$PATH"
+# ENV PATH="/usr/lib/dcm2niix:$PATH"
 
 
 
-# fix freesurfer recon-all.v6
+# # fix freesurfer recon-all.v6
 RUN mkdir ${HCPPIPEDIR_FS}/custom
 RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/recon-all.v6.hires && \
     mv recon-all.v6.hires ${HCPPIPEDIR_FS}/custom/recon-all.v6.hires && \
     chmod -R 755 ${HCPPIPEDIR_FS}/custom/recon-all.v6.hires 
 
 RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/conf2hires && \
-    mv conf2hires ${HCPPIPEDIR_FS}/custom/conf2hires && \
+    mv conf2hires ${HCPPIPEDIR_FS}/custom/conf2hires && \ 
     chmod -R 755 ${HCPPIPEDIR_FS}/custom/conf2hires 
 
 RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/longmc && \
@@ -269,31 +300,41 @@ RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines
     chmod -R 755 ${HCPPIPEDIR_FS}/custom/longmc
 
 ENV PATH="${HCPPIPEDIR_FS}/custom:${PATH}"
- # add structural processing scripts
+#  # add structural processing scripts
 
 RUN mv /opt/HCP-Pipelines/PreFreeSurfer/scripts/BiasFieldCorrection_sqrtT1wXT1w.sh \
     /opt/HCP-Pipelines/PreFreeSurfer/scripts/BiasFieldCorrection_sqrtT1wXT2w.sh
-RUN echo "Fixing BiasFieldCorrection_sqrtT1wXT1w Typo"
+# RUN echo "Fixing BiasFieldCorrection_sqrtT1wXT1w Typo"
 
-# set environment variables
-ENV FSLDIR=/usr/local/fsl
-ENV FSL_DIR="${FSLDIR}" \
-    FSLOUTPUTTYPE=NIFTI_GZ \
-    PATH=${FSLDIR}/bin:$PATH \
-    FSLMULTIFILEQUIT=TRUE \
-    POSSUMDIR=${FSLDIR} \
-    LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH \
-    FSLTCLSH=/usr/bin/tclsh \
-    FSLWISH=/usr/bin/wish \
-    FSLOUTPUTTYPE=NIFTI_GZ
+########### REMOVE REPEATED
 
-# update python3 & install needed libraries
-RUN apt-get update
-RUN apt-get -y install python3-pip
-RUN pip3 install nibabel && \
-    pip3 install matplotlib && \
-    pip3 install progressbar && \
-    pip3 install scipy
+# # set environment variables
+# ENV FSLDIR=/usr/local/fsl
+# ENV FSL_DIR="${FSLDIR}" \
+#     FSLOUTPUTTYPE=NIFTI_GZ \
+#     PATH=${FSLDIR}/bin:$PATH \
+#     FSLMULTIFILEQUIT=TRUE \
+#     POSSUMDIR=${FSLDIR} \
+#     LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH \
+#     FSLTCLSH=/usr/bin/tclsh \
+#     FSLWISH=/usr/bin/wish \
+#     FSLOUTPUTTYPE=NIFTI_GZ
+
+
+
+
+ENV LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:${FSLDIR}/lib:$LD_LIBRARY_PATH"
+
+
+
+
+# # update python3 & install needed libraries
+# RUN apt-get update
+# RUN apt-get -y install python3-pip
+# RUN pip3 install nibabel && \
+#     pip3 install matplotlib && \
+#     pip3 install progressbar && \
+#     pip3 install scipy
 
 # add structural processing steps
 RUN mkdir /opt/LeAPP-Structural

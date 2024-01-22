@@ -63,17 +63,6 @@ Session=`getopt1 "--session" $@`  # "$2"
 SubjectBiasFiles="$( find ${Path}/*/"${Session}/dwi_preprocessed" -name *"_DWI_biascorrected.mif")"
 SubjectMaskFiles="$( find ${Path}/*/"${Session}/dwi_preprocessed" -name *"_DWI_brainmask.nii.gz")"
 
-# if [[ ! -d ${Path}/"dwiintensitynorm_input" ]]; then
-#     mkdir ${Path}/'dwiintensitynorm_input'
-# fi
-
-# if [[ ! -d ${Path}/"dwiintensitynorm_mask" ]]; then
-#     mkdir ${Path}/'dwiintensitynorm_mask'
-# fi
-
-# if [[ ! -d ${Path}/"dwiintensitynorm_output" ]]; then
-#     mkdir ${Path}/'dwiintensitynorm_output'
-# fi
 
 if [[ ! -d ${Path}/"DWIIntNorm/${Session}" ]]; then
     mkdir -p "${Path}/DWIIntNorm/${Session}"
