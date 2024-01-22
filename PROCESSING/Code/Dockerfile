@@ -1,12 +1,14 @@
 FROM ubuntu:22.04
 LABEL maintainer="Patrik Bey <patrik.bey@bih-charite.de>"
-# needed for  ants within mrtrix3
+LABEL version="0.1"
+
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV LANG="C.UTF-8" \
-    LC_ALL="C.UTF-8"
+    LC_ALL="C.UTF-8" \
+    OS=Linux
 
-# Download FreeSurfer
+# Install OS packages using apt-get
 RUN apt-get -qq update && \
     apt-get install -yq --no-install-recommends \
     bc \
@@ -38,6 +40,8 @@ RUN apt-get -qq update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN echo "START:    intalling FreeSurfer"
+
 RUN wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
     | tar zxv -C /opt \
       --exclude='freesurfer/trctrain' \
@@ -56,8 +60,7 @@ RUN wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesur
     echo "cHJpbnRmICJrcnp5c3p0b2YuZ29yZ29sZXdza2lAZ21haWwuY29tXG41MTcyXG4gKkN2dW12RVYzelRmZ1xuRlM1Si8yYzFhZ2c0RVxuIiA+IC9vcHQvZnJlZXN1cmZlci9saWNlbnNlLnR4dAo=" | base64 -d | sh
 
 # Set up the environment
-ENV OS=Linux \
-    FS_OVERRIDE=0 \
+ENV FS_OVERRIDE=0 \
     FIX_VERTEX_AREA= \
     SUBJECTS_DIR=/opt/freesurfer/subjects \
     FSF_OUTPUT_FORMAT=nii.gz \
@@ -73,32 +76,66 @@ ENV OS=Linux \
     MNI_PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5 \
     PATH=/opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:$PATH
 
+# # fix freesurfer recon-all.v6
+RUN mkdir ${HCPPIPEDIR_FS}/custom
+RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/recon-all.v6.hires && \
+    mv recon-all.v6.hires ${HCPPIPEDIR_FS}/custom/recon-all.v6.hires && \
+    chmod -R 755 ${HCPPIPEDIR_FS}/custom/recon-all.v6.hires 
 
-RUN apt-get update -qq \
-    && echo "Downloading MATLAB Compiler Runtime ..." \
-    && curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip \
-    && unzip -q /tmp/mcr.zip -d /tmp/mcrtmp \
-    && /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes \
-    && rm -rf /tmp/*
+RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/conf2hires && \
+    mv conf2hires ${HCPPIPEDIR_FS}/custom/conf2hires && \ 
+    chmod -R 755 ${HCPPIPEDIR_FS}/custom/conf2hires 
 
-RUN echo "MATLAB compiler installation finished"
+RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/longmc && \
+    mv longmc ${HCPPIPEDIR_FS}/custom/longmc && \
+    chmod -R 755 ${HCPPIPEDIR_FS}/custom/longmc
+
+ENV PATH="${HCPPIPEDIR_FS}/custom:${PATH}"
+#  # add structural processing scripts
+
+RUN echo "FINISHED:    intalling FreeSurfer"
+
+
+RUN apt-get update -qq && \
+    echo "START:    installing MATLAB Compiler Runtime" && \
+    curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip && \
+    unzip -q /tmp/mcr.zip -d /tmp/mcrtmp && \
+    /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes && \
+    rm -rf /tmp/*
+
+# overwrite matlab mcr shared object
+RUN rm /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6 && \
+    ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6
+
+ENV MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab" \
+    MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91" 
+
+ENV LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
+
+RUN echo "FINISHED:    installing MATLAB Compiler Runtime"
 # Install miniconda2
 # still need python 2 for gradunwarp
-ENV PATH="/usr/local/miniconda/bin:$PATH"
-# RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.5.4-Linux-x86_64.sh && \
+
+RUN echo "START:    installing Miniconda"
+
+
 ####### updated conda version
-RUN curl -fsSLO https://repo.continuum.io/miniconda/Miniconda2-4.7.12.1-Linux-x86_64.sh && \
+RUN wget -q https://repo.continuum.io/miniconda/Miniconda2-4.7.12.1-Linux-x86_64.sh && \
     bash Miniconda2-4.7.12.1-Linux-x86_64.sh -b -p /usr/local/miniconda && \
-    rm Miniconda2-4.7.12.1-Linux-x86_64.sh && \
-    conda config --add channels conda-forge && \
+    rm Miniconda2-4.7.12.1-Linux-x86_64.sh
+
+ENV PATH="/usr/local/miniconda/bin:$PATH"
+
+RUN conda config --add channels conda-forge && \
     conda install -y mkl=2019.3 mkl-service=2.0.2 numpy=1.16.4 nibabel=2.4.1 pandas=0.24.2 && sync && \
     conda clean -tipsy && sync 
-RUN echo "Installing PyBids"
-# RUN pip install --no-cache-dir pybids==0.9.1
 
-RUN echo "Miniconda installation finished"
+
+
+RUN echo "FINISHED:    installing Miniconda"
 
 # Install connectome-workbench
+RUN echo "START:    installing connectome-workbench"
 WORKDIR /opt
 RUN wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip -O wb.zip \
     && unzip wb.zip \
@@ -106,9 +143,9 @@ RUN wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbenc
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 ENV CARET7DIR="/opt/workbench/bin_linux64"
 
-RUN echo "Workbench installation finished"
+RUN echo "FINISHED:    installing connectome-workbench"
 
-
+RUN echo "START:   installing HCP pipelines"
 # Install HCP Pipelines and MSM binaries
 RUN wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.0.0.tar.gz | tar xz -C /tmp && \
     mv /tmp/* /opt/HCP-Pipelines && \
@@ -116,9 +153,6 @@ RUN wget -qO- https://github.com/Washington-University/HCPpipelines/archive/v4.0
     wget -q https://github.com/ecr05/MSM_HOCR/releases/download/1.0/msm_ubuntu14.04 -O /opt/HCP-Pipelines/MSMBinaries/msm &&  \
     chmod 755 /opt/HCP-Pipelines/MSMBinaries/msm && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN echo "HCP pipelines installation finished"
-
 
 WORKDIR /
 
@@ -139,43 +173,21 @@ ENV HCPPIPEDIR_Templates=${HCPPIPEDIR}/global/templates \
     MSMBINDIR=${HCPPIPEDIR}/MSMBinaries \
     MSMCONFIGDIR=${HCPPIPEDIR}/MSMConfig
 
-## Install the validator
-# RUN wget -qO- https://deb.nodesource.com/setup_10.x | bash - && \
-#     apt-get update && \
-#     apt-get install -y --no-install-recommends nodejs && \
-#     npm install -g bids-validator@1.2.3 && \
-#     apt-get clean && \
-#     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# RUN echo "BIDS validator installation finished"
+# RUN echo "Fixing BiasFieldCorrection_sqrtT1wXT1w Typo"
+RUN mv /opt/HCP-Pipelines/PreFreeSurfer/scripts/BiasFieldCorrection_sqrtT1wXT1w.sh \
+    /opt/HCP-Pipelines/PreFreeSurfer/scripts/BiasFieldCorrection_sqrtT1wXT2w.sh
 
 
-# RUN wget -q http://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py && \
-#     chmod 775 fslinstaller.py && \
-#     python2 /fslinstaller.py -d /opt/fsl -V 6.0.4 -q && \
-#     rm -f /fslinstaller.py
-# RUN which immv || ( echo "FSLPython not properly configured; re-running" && rm -rf /opt/fsl/fslpython && /opt/fsl/etc/fslconf/fslpython_install.sh -f /opt/fsl || ( cat /tmp/fslpython*/fslpython_miniconda_installer.log && exit 1 ) )
+RUN echo "FINISHED:   installing HCP pipelines"
+
+RUN echo "START:   installing FSL"
 
 ### UPDATE to FSL6.0.6 from 6.0.4 to enable installation via fslinsaller.py
-
 RUN wget -q http://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py -O /usr/local/fslinstaller.py 
 RUN chmod 775 /usr/local/fslinstaller.py && \
     python2 /usr/local/fslinstaller.py -d /opt/fsl -V 6.0.6 && \
     rm -f /usr/local/fslinstaller.py
 
-# RUN rm -rf /opt/fsl/fslpython && \
-#    /opt/fsl/etc/fslconf/fslpython_install.sh -f /opt/fsl 
-# Install FSL
-# RUN 
-# curl https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-6.0.1-centos6_64.tar.gz \
-#          | tar -xz -C /usr/local
-# RUN 
-# /usr/local/fsl/etc/fslconf/fslpython_install.sh -f /usr/local/fsl
-
-RUN echo "FSL installation finished"
-
-# Configure environment
-# ENV FSLDIR=/usr/local/fsl
 ENV FSLDIR=/opt/fsl
 ENV FSL_DIR="${FSLDIR}" \
     FSLOUTPUTTYPE=NIFTI_GZ \
@@ -186,11 +198,15 @@ ENV FSL_DIR="${FSLDIR}" \
     FSLWISH=/usr/bin/wish \
     FSLOUTPUTTYPE=NIFTI_GZ
 
-    # LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH \
+ENV LD_LIBRARY_PATH="${FSLDIR}/lib:$LD_LIBRARY_PATH"
+
+
+RUN echo "FINISHED:   installing FSL"
+
+RUN echo "START:   installing gradunwarp"
 # install gradient_unwarp.py (v1.1.0)
 WORKDIR /tmp
-# wget -q https://github.com/Washington-University/gradunwarp/archive/v1.2.2.zip 
-# wget -q https://github.com/Washington-University/gradunwarp/archive/v1.1.0.zip 
+
 RUN wget -q https://github.com/Washington-University/gradunwarp/archive/refs/tags/1.2.2.zip && \
     unzip 1.2.2.zip && \
     cd gradunwarp-1.2.2 && \
@@ -198,55 +214,30 @@ RUN wget -q https://github.com/Washington-University/gradunwarp/archive/refs/tag
     pip install . && \
     cd .. && \
     rm -rf gradunwarp-1.2.2 1.2.2.zip
-
-# && \
-#   unzip v1.1.0.zip 
-#   && \
-#   cd gradunwarp-1.1.0 
-#   && \
-#   python setup.py install 
-#   && \
-#   rm -rf gradunwarp-1.1.0 v1.1.0.zip
-
-RUN echo "gradunwarp installation finished"
+RUN echo "FINISHED:   installing gradunwarp"
 
 # Fix Topup scripts
-
+RUN echo "START:   update TopUp scripts"
 RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/dc7aae3a7a1cae920b390500d85536681b14108c/global/scripts/TopupPreprocessingAll.sh -O /opt/HCP-Pipelines/global/scripts/TopupPreprocessingAll.sh
+RUN echo "FINISHED:   update TopUp scripts"
 
-# Install MCR 2016b
-ENV MATLABCMD="/opt/matlabmcr-2016b/v91/toolbox/matlab" \
-    MATLAB_COMPILER_RUNTIME="/opt/matlabmcr-2016b/v91" 
-    # LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:$LD_LIBRARY_PATH"
+# Set ANTs variables
+RUN echo "START:    installing ANTs"
 
+RUN mkdir /opt/ants-tmp
+RUN wget -q "https://github.com/ANTsX/ANTs/releases/download/v2.5.0/ants-2.5.0-ubuntu-22.04-X64-gcc.zip" -O /opt/ants-tmp/ants.zip
+RUN unzip -q /opt/ants-tmp/ants.zip -d /opt/ants-tmp && \
+    mv /opt/ants-tmp/ants-2.5.0 /opt/ants && \
+    rm -r /opt/ants-tmp
 
-# overwrite matlab mcr shared object
-RUN rm /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6 && \
-    ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/matlabmcr-2016b/v91/sys/os/glnxa64/libstdc++.so.6
+ENV PATH=/opt/ants/bin:$PATH \
+    ANTSDIR=/opt/ants \
+    ANTSPATH=${ANTSDIR}
 
+RUN echo "FINISHED:    installing ANTs"
 
+RUN echo "START:    installing MRtrix3"
 # install mrtrix3 for tractography
-RUN echo "START: mrtrix3 installation"
-
-
-# Install MRtrix3 compile-time dependencies.
-# RUN apt-get install -yq --no-install-recommends \
-#     git \
-#     libeigen3-dev \
-#     libfftw3-dev \
-#     libgl1-mesa-dev \
-#     libpng-dev \
-#     libtiff5-dev \
-#     zlib1g-dev 
-        #   qt5-default \
-        #   libqt5opengl5  \s
-        #   libqt5opengl5-dev \
-        #   libqt5svg5-dev 
-
-
-
-# ENV PATH="/opt/qt5/bin:$PATH"
-#### trying apt update && apt upgrade
 
 RUN git clone -b "master" --depth 1 https://github.com/MRtrix3/mrtrix3.git /opt/mrtrix3
 
@@ -259,83 +250,11 @@ ENV MRTRIXDIR=/opt/mrtrix3
 # add mrtrix to PATH variable
 ENV PATH="/opt/mrtrix3/bin:$PATH"
 
-########################
-# ANTs and Dicom2Niix not needed for final pipeline
-########################
+
+RUN echo "START:    installing MRtrix3"
 
 
-# Install ANTs
-
-# # RUN apt-get update
-# RUN apt-get install -y ants
-# ENV ANTSDIR=/usr/lib/ants
-# ENV ANTSPATH=${ANTSDIR}
-# # add ants to PATH variable
-# ENV PATH="/usr/lib/ants:$PATH"
-
-
-# # include dcm2niix for DICOM conversion
-# RUN wget -q https://github.com/rordenlab/dcm2niix/releases/download/v1.0.20200331/dcm2niix_lnx.zip && \
-#     unzip dcm2niix_lnx.zip && \
-#     mkdir /usr/lib/dcm2niix && \
-#     mv dcm2niix /usr/lib/dcm2niix/dcm2niix && \
-#     rm -r dcm2niix_lnx.zip
-
-# ENV PATH="/usr/lib/dcm2niix:$PATH"
-
-
-
-# # fix freesurfer recon-all.v6
-RUN mkdir ${HCPPIPEDIR_FS}/custom
-RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/recon-all.v6.hires && \
-    mv recon-all.v6.hires ${HCPPIPEDIR_FS}/custom/recon-all.v6.hires && \
-    chmod -R 755 ${HCPPIPEDIR_FS}/custom/recon-all.v6.hires 
-
-RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/conf2hires && \
-    mv conf2hires ${HCPPIPEDIR_FS}/custom/conf2hires && \ 
-    chmod -R 755 ${HCPPIPEDIR_FS}/custom/conf2hires 
-
-RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/longmc && \
-    mv longmc ${HCPPIPEDIR_FS}/custom/longmc && \
-    chmod -R 755 ${HCPPIPEDIR_FS}/custom/longmc
-
-ENV PATH="${HCPPIPEDIR_FS}/custom:${PATH}"
-#  # add structural processing scripts
-
-RUN mv /opt/HCP-Pipelines/PreFreeSurfer/scripts/BiasFieldCorrection_sqrtT1wXT1w.sh \
-    /opt/HCP-Pipelines/PreFreeSurfer/scripts/BiasFieldCorrection_sqrtT1wXT2w.sh
-# RUN echo "Fixing BiasFieldCorrection_sqrtT1wXT1w Typo"
-
-########### REMOVE REPEATED
-
-# # set environment variables
-# ENV FSLDIR=/usr/local/fsl
-# ENV FSL_DIR="${FSLDIR}" \
-#     FSLOUTPUTTYPE=NIFTI_GZ \
-#     PATH=${FSLDIR}/bin:$PATH \
-#     FSLMULTIFILEQUIT=TRUE \
-#     POSSUMDIR=${FSLDIR} \
-#     LD_LIBRARY_PATH=${FSLDIR}/lib:$LD_LIBRARY_PATH \
-#     FSLTCLSH=/usr/bin/tclsh \
-#     FSLWISH=/usr/bin/wish \
-#     FSLOUTPUTTYPE=NIFTI_GZ
-
-
-
-
-ENV LD_LIBRARY_PATH="/opt/matlabmcr-2016b/v91/runtime/glnxa64:/opt/matlabmcr-2016b/v91/bin/glnxa64:/opt/matlabmcr-2016b/v91/sys/os/glnxa64:${FSLDIR}/lib:$LD_LIBRARY_PATH"
-
-
-
-
-# # update python3 & install needed libraries
-# RUN apt-get update
-# RUN apt-get -y install python3-pip
-# RUN pip3 install nibabel && \
-#     pip3 install matplotlib && \
-#     pip3 install progressbar && \
-#     pip3 install scipy
-
+RUN echo "START:    integrate LeAPP Code"
 # add structural processing steps
 RUN mkdir /opt/LeAPP-Structural
 ENV LEAPP_STRUCTDIR=/opt/LeAPP-Structural
@@ -371,6 +290,8 @@ RUN chmod -R 755 ${LEAPP_MISCDIR}
 
 COPY Code/RUN.sh /usr/local/bin/RUN.sh
 RUN chmod +x /usr/local/bin/RUN.sh
+
+RUN echo "FINISHED:    integrate LeAPP Code"
 
 # call run script 
 CMD ["bash", "/usr/local/bin/RUN.sh"]
