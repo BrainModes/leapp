@@ -98,7 +98,7 @@ RUN echo "FINISHED:    intalling FreeSurfer"
 
 RUN apt-get update -qq && \
     echo "START:    installing MATLAB Compiler Runtime" && \
-    curl -fsSL --retry 5 -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip && \
+    wget -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip && \
     unzip -q /tmp/mcr.zip -d /tmp/mcrtmp && \
     /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes && \
     rm -rf /tmp/*
