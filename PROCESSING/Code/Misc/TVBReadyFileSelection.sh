@@ -167,10 +167,10 @@ python3 "${LEAPP_MISCDIR}/Scripts/GetParcellationCenters.py" \
 
 
 if [[ -d "${Path}/${Subject}/${Session}/lesion/" ]]; then
-    mkdir -p "${TVBDir}/lesion"
-    log_Msg "UPDATE:    add lesion specific files"
+    log_Msg "UPDATE:    add pathology specific files"
+    cp -r "${Path}/${Subject}/${Session}/phenotype" "${TVBDir}/phenotype"
     cp "${Path}/${Subject}/${Session}/lesion/T1w_acpc_dc_restore_mask.nii.gz" ${TVBDir}/T1w/${Subject}_T1w_final_lesion_mask.nii.gz
-    cp "${Path}/${Subject}/${Session}/lesion/LesionAffectedROIs.txt" "${TVBDir}/lesion/${Subject}_ROI_lesionload.txt"
+    cp "${Path}/${Subject}/${Session}/lesion/LesionAffectedROIs.txt" "${TVBDir}/phenotype/${Subject}_ROI_lesionload.txt"
 fi
 
 
