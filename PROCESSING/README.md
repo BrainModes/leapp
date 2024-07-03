@@ -161,7 +161,7 @@ HCP PROCESSING PIPELINE (https://www.humanconnectome.org) <sup>2</sup>
 
 ## REFERENCES
 
-<sup>1</sup> Bey et al. (in prep), Lesion aware automated processing pipeline for multimodal neuroimaging stroke data and TheVirtualBrain (TVB).\
+<sup>1</sup> Bey, P., Dhindsa, K., Kashyap, A., Schirner, M., Feldheim, J., Bönstrup, M., Schulz, R., Cheng, B., Thomalla, G., Gerloff, C., & Ritter, P. (2024). A lesion-aware automated processing framework for clinical stroke magnetic resonance imaging. Human Brain Mapping, 45(9), e26701. https://doi.org/10.1002/hbm.26701 \
 <sup>2</sup> [Glasser et al. 2013, The minimal preprocessing pipelines for the Human Connectome Project](http://dx.doi.org/10.1016/j.neuroimage.2013.04.127) \
 <sup>3</sup> [Tournier et al. 2019, MRtrix3: A fast, flexible and open software framework for medical image processing and visualisation](https://doi.org/10.1016/j.neuroimage.2019.116137)
 

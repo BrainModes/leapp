@@ -19,12 +19,10 @@
 # ## Description
 #
 # This script performs  virtual brain transplant (VBT) as
-# described in "Lesion Aware automated processing pipeline", Bey et al. (in prep.)
+# described in Bey et al. (2024)
 # for a given input image and corresponding lesion mask.
 # 
 #
-
-
 
 #############################################
 #                                           #

@@ -18,7 +18,7 @@
 # ## Description
 #
 # This script is a wrapper for the full functionality of the LeAPP processing
-# pipeline as described in Bey et al. (in prep.)
+# pipeline as described in Bey et al. (2024)
 #
 # * The steps that can be performed are split in four main categories:
 # *
@@ -34,7 +34,7 @@
 #
 # The structural processing pipeline is the human connectome project (HCP) 
 # minimal processing pipelie (Glasser et al.2013) 
-# adjusted for use with lesioned brain data (Bey et al. (in prep)).
+# adjusted for use with lesioned brain data (Bey et al. (2024)).
 # These adjustments include three major updates.
 #
 # 1.1 The automated creation of lesion mask in required reference spaces to use for 

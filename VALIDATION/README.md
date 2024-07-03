@@ -175,6 +175,6 @@ Maintainer: patrik.bey@bih-charite.de
 
 ## REFERENCES
 
-<sup>1</sup> Bey et al. (in prep), Lesion aware automated processing pipeline for multimodal neuroimaging stroke data and TheVirtualBrain (TVB).
+<sup>1</sup> Bey, P., Dhindsa, K., Kashyap, A., Schirner, M., Feldheim, J., Bönstrup, M., Schulz, R., Cheng, B., Thomalla, G., Gerloff, C., & Ritter, P. (2024). A lesion-aware automated processing framework for clinical stroke magnetic resonance imaging. Human Brain Mapping, 45(9), e26701. https://doi.org/10.1002/hbm.26701
 
 <sup>2</sup> Bey, P., Dhindsa, K., & Ritter, P. (2022). Cost function masking (CFM) inflates group level difference in processing of MRI data. In *FENS Forum 2022*. [DOI](https://figshare.com/s/52d844dde062f5b75c9e)
