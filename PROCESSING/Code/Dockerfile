@@ -96,11 +96,11 @@ ENV PATH="${HCPPIPEDIR_FS}/custom:${PATH}"
 RUN echo "FINISHED:    intalling FreeSurfer"
 
 
-RUN apt-get update -qq && \
-    echo "START:    installing MATLAB Compiler Runtime" && \
-    wget -o /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip && \
-    unzip -q /tmp/mcr.zip -d /tmp/mcrtmp && \
-    /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes && \
+RUN apt-get update -qq
+RUN echo "START:    installing MATLAB Compiler Runtime" && \
+    wget -qO /tmp/mcr.zip https://ssd.mathworks.com/supportfiles/downloads/R2016b/deployment_files/R2016b/installers/glnxa64/MCR_R2016b_glnxa64_installer.zip
+RUN unzip -q /tmp/mcr.zip -d /tmp/mcrtmp
+RUN /tmp/mcrtmp/install -destinationFolder /opt/matlabmcr-2016b -mode silent -agreeToLicense yes && \
     rm -rf /tmp/*
 
 # overwrite matlab mcr shared object
