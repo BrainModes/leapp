@@ -103,9 +103,11 @@ GetFieldMaps() {
     GetFMapTask() {
         # $1 phase difference filename
         tmp=$( basename ${1%.nii.gz})
-        tmp=$( echo ${tmp%_part-phase_bold})
-        tmpsplit=(${tmp//-/ })
-        fmaptask=$( echo ${tmpsplit[2]})
+        # tmp=$( echo ${tmp%_part-phase_bold})
+        tmp=${tmp#*_task-}
+        fmaptask=${tmp%_part*}
+        # tmpsplit=(${tmp//-/ })
+        # fmaptask=$( echo ${tmpsplit[2]})
     }
     _task=$( basename ${1%.nii.gz})
     PhaseFiles=( ${Path}/${Subject}/${Session}/fmap/*-phase_bold.nii*)
@@ -117,7 +119,7 @@ GetFieldMaps() {
             GetFMapTask ${pf}
             if [[ "${_task}" == *"${fmaptask}"* ]]; then
                 FMapPhaseDiff=${pf}
-                FMapMagnitude="${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}_part-mag_concat_bold.nii.gz"
+                FMapMagnitude="${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}-mag_concat_bold.nii.gz"
                 ${FSLDIR}/bin/fslmerge -t \
                     ${FMapMagnitude} \
                     "${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}_part-1-mag_bold.nii.gz" \
@@ -131,8 +133,8 @@ GetFieldMaps() {
         FMapMagnitude="${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}-mag_concat_bold.nii.gz"
         ${FSLDIR}/bin/fslmerge -t \
             ${FMapMagnitude} \
-            "${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}-part-1-mag_bold.nii.gz" \
-            "${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}-part-2-mag_bold.nii.gz"
+            "${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}_part-1-mag_bold.nii.gz" \
+            "${Path}/${Subject}/${Session}/fmap/${Subject}_task-${fmaptask}_part-2-mag_bold.nii.gz"
     fi
 }
 

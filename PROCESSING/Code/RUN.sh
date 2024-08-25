@@ -314,14 +314,7 @@ fi
 
 #-----------------processing steps-------------------#
 
-if [[ ! -z "$( contains "lesion")" ]]; then
-	LESION="True"
-	log_Msg "IMPORTANT:    Running lesion based processing. Pipeline expects '${SubID}_*_lesion_mask.nii.gz' file in anat subject folder."
-	if [[ -z ${SmoothingFactor} ]]; then
-		export SmoothingFactor="2"
-		log_Msg "UPDATE:    Using default smoothing parameter sigma=${SmoothingFactor} during virtual brain transplant."
-	fi
-fi
+
 
 if [[ ! -z "$( contains "full")" ]]; then
 	export STRUCT="True"
@@ -348,6 +341,17 @@ else
 			TVBREADY="True"
 		fi
 	done
+fi
+
+if [[ ! -z "$( contains "lesion")" ]]; then
+	LESION="True"
+	log_Msg "IMPORTANT:    Running lesion based processing. Pipeline expects '${SubID}_*_lesion_mask.nii.gz' file in anat folder during structural processing."
+	if [[ ${STRUCT} = "True" ]]; then
+		if [[ -z ${SmoothingFactor} ]]; then
+			export SmoothingFactor="2"
+			log_Msg "UPDATE:    Using default smoothing parameter sigma=${SmoothingFactor} during virtual brain transplant."
+		fi
+	fi
 fi
 
 

@@ -42,8 +42,8 @@ RUN apt-get -qq update && \
 
 RUN echo "START:    intalling FreeSurfer"
 
-RUN wget -qO- ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz \
-    | tar zxv -C /opt \
+RUN wget -q ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz 
+RUN tar zxv -f freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz -C /opt \
       --exclude='freesurfer/trctrain' \
       --exclude='freesurfer/subjects/fsaverage_sym' \
       --exclude='freesurfer/subjects/fsaverage3' \
@@ -76,7 +76,7 @@ ENV FS_OVERRIDE=0 \
     MNI_PERL5LIB=/opt/freesurfer/mni/lib/perl5/5.8.5 \
     PATH=/opt/freesurfer/bin:/opt/freesurfer/fsfast/bin:/opt/freesurfer/tktools:/opt/freesurfer/mni/bin:$PATH
 
-# # fix freesurfer recon-all.v6
+# # # fix freesurfer recon-all.v6
 RUN mkdir ${HCPPIPEDIR_FS}/custom
 RUN wget -q https://raw.githubusercontent.com/Washington-University/HCPpipelines/master/FreeSurfer/custom/recon-all.v6.hires && \
     mv recon-all.v6.hires ${HCPPIPEDIR_FS}/custom/recon-all.v6.hires && \
@@ -134,7 +134,7 @@ RUN conda config --add channels conda-forge && \
 
 RUN echo "FINISHED:    installing Miniconda"
 
-# Install connectome-workbench
+# # Install connectome-workbench
 RUN echo "START:    installing connectome-workbench"
 WORKDIR /opt
 RUN wget -q https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip -O wb.zip \
@@ -207,13 +207,28 @@ RUN echo "START:   installing gradunwarp"
 # install gradient_unwarp.py (v1.1.0)
 WORKDIR /tmp
 
-RUN wget -q https://github.com/Washington-University/gradunwarp/archive/refs/tags/1.2.2.zip && \
-    unzip 1.2.2.zip && \
-    cd gradunwarp-1.2.2 && \
-    pip install -r requirements.txt && \
-    pip install . && \
-    cd .. && \
-    rm -rf gradunwarp-1.2.2 1.2.2.zip
+# RUN wget -q https://github.com/Washington-University/gradunwarp/archive/refs/tags/1.2.2.zip -O 1.2.2.zip
+
+# RUN unzip 1.2.2.zip && \
+#     cd gradunwarp-1.2.2 && \
+#     pip3 install -r requirements.txt && \
+#     pip3 install . && \
+#     cd .. && \
+#     rm -rf gradunwarp-1.2.2 1.2.2.zip
+
+##########################
+#
+# UKBIOBANK GRADUNWARP, check compatibility!
+# https://git.fmrib.ox.ac.uk/fsl/gradunwarp
+#
+##########################
+RUN conda create -yn gradunwarp.dev
+RUN conda install -y \
+    -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ \
+    -c conda-forge \
+    -p /opt/fsl/envs/gradunwarp.dev \
+    fsl-gradunwarp
+
 RUN echo "FINISHED:   installing gradunwarp"
 
 # Fix Topup scripts
@@ -237,10 +252,9 @@ ENV PATH=/opt/ants/bin:$PATH \
 RUN echo "FINISHED:    installing ANTs"
 
 RUN echo "START:    installing MRtrix3"
-# install mrtrix3 for tractography
+# # install mrtrix3 for tractography
 
 RUN git clone -b "master" --depth 1 https://github.com/MRtrix3/mrtrix3.git /opt/mrtrix3
-
 RUN cd /opt/mrtrix3/ && \
     ./configure -nogui && \
     ./build -persistent -nopaginate
