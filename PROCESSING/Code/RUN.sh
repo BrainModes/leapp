@@ -221,13 +221,18 @@ Usage: docker run -e <OPTION>=<VALUE> -v </PATH/TO/STUDYFOLDER>:/data
 								<segment>		: running 5 tissue type segmentation based on processed T1w image. Optional parameter:
 								<response>		: running population based response function normalization.
 								<connectome>	: running connectome creation with optional lesion embedding.
-							
+								<ROI>			: running ROI based tractography and connectome creation.
 							<tvb>: Get minimally required TVB files for simulation and reformat. [currently not supported]
 
 -e Atlas=<string>		Parcellation to use in SC creation [optional]
 								[default : HCP-MMP1]
+ 
+-e Streams=<integer>		Number of streamlines to compute in tractography [optional; default: 100Mio traces]			
 
--e Streams=<integer>		Number of streamlines to compute in tractography [optional; default: 100Mio traces]								
+-e ROIVolume=<string>	Filename for ROI mask to use in ROI based connectome creation step <ROI>. [optional]
+							possiple <parameter> variations:
+							<string>			: Nifti filename substring e.g. sub-01_ROI-<L-V1>-mask.nii.gz [inside of subject dwi folder]
+							<string>			: comma separated list of ROI names matching atlas used during structural processing. [e.g. 'L_V1, L_V2']
 							
 -e MaskSpace=<string>	Basis space of provided lesion mask volume. [default: T1w]
 							Possible <parameter>:
@@ -387,11 +392,21 @@ if [ ! -z ${DWI} ]; then
 	dwiresponse=${check}
 	check="$( contains "connectome")"
 	dwiconnect=${check}
-	if [[ -z ${dwipreproc} ]] && [[ -z ${dwinormal} ]] && [[ -z ${dwisegment} ]] && [[ -z ${dwiresponse} ]] && [[ -z ${dwiconnect} ]]; then
+	check="$( contains "ROI")"
+	dwiroi=${check}
+	if [[ -z ${dwipreproc} ]] && [[ -z ${dwinormal} ]] && [[ -z ${dwisegment} ]] && [[ -z ${dwiresponse} ]] && [[ -z ${dwiconnect} ]] && [[ -z ${dwiroi} ]]; then
 		log_Msg "ERROR:    Please specify a processing step for diffusion processing"
 		show_usage
 		exit 1
 	fi
+	if [[ ! -z ${dwiroi} ]]; then
+		if [[ -z ${ROIVolume} ]]; then
+			log_Msg "ERROR:    Missing ROI volume image for ${Steps} analysis."
+			show_usage
+			exit 1
+		fi
+	fi
+
 fi
 
 #----------------functional processing-------------------#
@@ -480,7 +495,8 @@ if [ ! -z ${DWI} ]; then
 		--response=${dwiresponse} \
 		--connectome=${dwiconnect} \
 		--lesion=${LESION} \
-		--streams=${Streams}
+		--streams=${Streams} \
+		--roimask=${ROIVolume}
 	
 	CheckExit ${LEAPP_DWIDIR}/DiffusionPipeline.sh
 

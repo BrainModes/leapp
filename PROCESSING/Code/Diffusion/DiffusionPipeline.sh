@@ -74,7 +74,7 @@ source ${HCPPIPEDIR}/global/scripts/opts.shlib # Command line option functions
 Path=`getopt1 "--path" $@`  # "$1" directory path containing all subjects
 Subject=`getopt1 "--subject" $@`  # "$2" subject ID (e.g. 0001)
 Session=`getopt1 "--session" $@`  # "$3" session ID (e.g. 01)
-ParcName=`getopt1 "--atlas" $@`  # "$4" Atlas to use as parcellation for FC computation
+Atlas=`getopt1 "--atlas" $@`  # "$4" Atlas to use as parcellation for FC computation
 PreProcStep=`getopt1 "--preproc" $@` # $5 boolean if preprocessing is performed
 INStep=`getopt1 "--normal" $@` # $6 boolean if functional connectome creation is performed
 SegmStep=`getopt1 "--segment" $@` # $7 fmri file names (including path) to process. [optional; default: use all volumes found in <<$Path/$Subject/func/>>]
@@ -82,6 +82,7 @@ RespStep=`getopt1 "--response" $@` # $8 boolean if experimental design task onse
 SCStep=`getopt1 "--connectome" $@` # $9 boolean if structural connectomes are created
 LesionInclude=`getopt1 "--lesion" $@` # $10 boolean if to include lesion in processing
 NrStreams=`getopt1 "--streams" $@` # $11 number of streams to compute in tractography [default 100Mio]
+ROIMask=`getopt1 "--roimask" $@` # $12 mask image to use for ROI based connectome creation
 
 
 
@@ -146,7 +147,7 @@ if [[ ! -z ${RespStep} ]]; then
 fi
 
 
-#------------AVERAGING RESPONSE FUNCTION------------#
+#------------TRACTOGRAPHY & CONNECTOMES------------#
 if [[ ! -z ${SCStep} ]]; then
     ${LEAPP_DWIDIR}/Scripts/DWITractography.sh \
         --path=${Path} \
@@ -157,6 +158,18 @@ if [[ ! -z ${SCStep} ]]; then
         --streams=${NrStreams}
     
     CheckExit ${LEAPP_DWIDIR}/Scripts/DWITractography.sh
+fi
+
+if [[ ! -z ${ROIMask} ]]; then
+    ${LEAPP_DWIDIR}/Scripts/DWIROIConnectome.sh \
+        --path=${Path} \
+        --subject=${SubID} \
+        --session=${Session} \
+        --parcname=${Atlas} \
+        --rois=${ROIMask} \
+        --streams=${NrStreams}
+
+    CheckExit ${LEAPP_DWIDIR}/Scripts/DWIROIConnectome.sh
 fi
 
 log_Msg "FINISHED:    diffusion processing for ${Subject} : ${Session}."
