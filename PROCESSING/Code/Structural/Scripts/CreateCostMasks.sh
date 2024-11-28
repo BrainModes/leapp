@@ -62,8 +62,7 @@ RegisterMask() {
     -in ${2} \
     -refweight ${3}"_invert.nii.gz" \
     -ref ${1} \
-    -omat "${TempDir}/${4}2ref.mat" \
-    -out "${TempDir}/T2toT2test.nii.gz"
+    -omat "${TempDir}/${4}2ref.mat"
 # invert transformation matrix
     ${FSLDIR}/bin/convert_xfm \
         "${TempDir}/${4}2ref.mat"  \

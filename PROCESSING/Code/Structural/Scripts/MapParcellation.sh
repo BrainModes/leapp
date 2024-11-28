@@ -79,7 +79,8 @@ Resample() {
         -ref ${2} \
         -out ${_outimage} \
         -applyxfm \
-        -usesqform
+        -usesqform \
+        -interp nearestneighbour
 
     ${FSLDIR}/bin/fslmaths \
     ${_outimage} \

@@ -112,6 +112,9 @@ else
     exit 1
 fi
 
+if [ ! -d "${Path}/${Subject}/${Session}/connectome" ]; then
+    mkdir -p "${Path}/${Subject}/${Session}/connectome"
+fi
 
 ##################### 
 # TO DO: add tractography subsetting

@@ -203,33 +203,33 @@ ENV LD_LIBRARY_PATH="${FSLDIR}/lib:$LD_LIBRARY_PATH"
 
 RUN echo "FINISHED:   installing FSL"
 
-RUN echo "START:   installing gradunwarp"
-# install gradient_unwarp.py (v1.1.0)
-WORKDIR /tmp
+# RUN echo "START:   installing gradunwarp"
+# # install gradient_unwarp.py (v1.1.0)
+# WORKDIR /tmp
 
-# RUN wget -q https://github.com/Washington-University/gradunwarp/archive/refs/tags/1.2.2.zip -O 1.2.2.zip
+# # RUN wget -q https://github.com/Washington-University/gradunwarp/archive/refs/tags/1.2.2.zip -O 1.2.2.zip
 
-# RUN unzip 1.2.2.zip && \
-#     cd gradunwarp-1.2.2 && \
-#     pip3 install -r requirements.txt && \
-#     pip3 install . && \
-#     cd .. && \
-#     rm -rf gradunwarp-1.2.2 1.2.2.zip
+# # RUN unzip 1.2.2.zip && \
+# #     cd gradunwarp-1.2.2 && \
+# #     pip3 install -r requirements.txt && \
+# #     pip3 install . && \
+# #     cd .. && \
+# #     rm -rf gradunwarp-1.2.2 1.2.2.zip
 
-##########################
-#
-# UKBIOBANK GRADUNWARP, check compatibility!
-# https://git.fmrib.ox.ac.uk/fsl/gradunwarp
-#
-##########################
-RUN conda create -yn gradunwarp.dev
-RUN conda install -y \
-    -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ \
-    -c conda-forge \
-    -p /opt/fsl/envs/gradunwarp.dev \
-    fsl-gradunwarp
+# ##########################
+# #
+# # UKBIOBANK GRADUNWARP, check compatibility!
+# # https://git.fmrib.ox.ac.uk/fsl/gradunwarp
+# #
+# ##########################
+# RUN conda create --solver=classic -yn gradunwarp.dev
+# RUN conda install -y \
+#     -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ \
+#     -c conda-forge \
+#     -p /opt/fsl/envs/gradunwarp.dev \
+#     fsl-gradunwarp
 
-RUN echo "FINISHED:   installing gradunwarp"
+# RUN echo "FINISHED:   installing gradunwarp"
 
 # Fix Topup scripts
 RUN echo "START:   update TopUp scripts"
@@ -265,7 +265,7 @@ ENV MRTRIXDIR=/opt/mrtrix3
 ENV PATH="/opt/mrtrix3/bin:$PATH"
 
 
-RUN echo "START:    installing MRtrix3"
+RUN echo "FINISHED:    installing MRtrix3"
 
 
 RUN echo "START:    integrate LeAPP Code"

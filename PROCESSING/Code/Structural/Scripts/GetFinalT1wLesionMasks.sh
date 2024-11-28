@@ -53,9 +53,7 @@ GetTempDir(){
 
 InvertImage() {
     # invert binary lesion mask to use in cost function masking
-	fslmaths ${1} -bin ${1}
-	fslmaths ${1} -mul -1 -add 1 -thr 0.5 -bin ${1}_invert
-	fslmaths ${1}_invert -bin ${1}_invert
+	fslmaths ${1} -binv ${1%.nii.gz}_invert.nii.gz
 }
 
 source ${HCPPIPEDIR}/global/scripts/log.shlib  # Logging related functions
@@ -77,11 +75,11 @@ Session=`getopt1 "--session" $@`  # "$3" session ID (e.g. ses-01)
 WD="${Path}/${Subject}/${Session}"
 
 InputImage="${WD}/T1w/T1w_acpc_dc_restore.nii.gz"
-RefImage="${WD}/lesion/BaseImage.nii.gz"
-RefMask="${WD}/lesion/BaseImageMask_invert.nii.gz"
+RefImage="${WD}/anat/${Subject}*T1w.nii.gz"
+RefMask="${WD}/lesion/T1w_lesion_mask_invert.nii.gz"
 
-if [[ ! -f ${RefImage} ]]; then
-    log_Msg "ERROR:    No >>/lesion/BaseImage.nii.gz<< found. Did you run CreateCostMasks.sh?"
+if [[ ! -f ${RefMask} ]]; then
+    log_Msg "ERROR:    No >>/lesion/T1w_lesion_mask.nii.gz<< found. Did you run CreateCostMasks.sh?"
     exit 1
 fi
 #############################################
@@ -117,6 +115,11 @@ ${FSLDIR}/bin/flirt -applyxfm -usesqform \
     -in "${WD}/lesion/T1w_lesion_mask.nii.gz" \
     -ref ${InputImage} \
     -out "${WD}/lesion/T1w_acpc_dc_restore_mask.nii.gz"
+
+${FSLDIR}/bin/fslmaths \
+    "${WD}/lesion/T1w_acpc_dc_restore_mask.nii.gz" \
+    -bin \
+    "${WD}/lesion/T1w_acpc_dc_restore_mask.nii.gz"
 
 # invert created lesion mask
 InvertImage "${WD}/lesion/T1w_acpc_dc_restore_mask"

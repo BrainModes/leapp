@@ -82,8 +82,10 @@ log_Msg "START: Performing tractoraphy for ${Subject}"
 
 # check if streams provided else use default 100Mio streams
 if [[ -z ${Streams} ]]; then
-    log_Msg "UPDATE:   No number of streams defined. Createing default 10Mio streamlines."
+    log_Msg "UPDATE:   No number of streams defined. Creating default 10Mio streamlines."
     Streams=10000000
+else
+    log_Msg "UPDATE:    Creating ${Streams} streamlines."
 fi
 
 
